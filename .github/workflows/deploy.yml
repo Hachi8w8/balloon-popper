@@ -35,7 +35,7 @@ jobs:
         run: npm install
       - name: Build
         env:
-          VITE_BASE_PATH: /${{ steps.random.outputs.random_path }}/
+          VITE_BASE_PATH: /balloon-popper/${{ steps.random.outputs.random_path }}/
         run: npm run build
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -49,4 +49,4 @@ jobs:
       - name: Output Game URL
         run: |
           echo "🎮 ゲームのURLはこちら："
-          echo "https://hachi8w8.github.io/${{ steps.random.outputs.random_path }}/" 
+          echo "https://hachi8w8.github.io/balloon-popper/${{ steps.random.outputs.random_path }}/" 
