@@ -45,6 +45,7 @@ export const Balloon: React.FC<BalloonProps> = memo(
           className="w-full h-full pointer-events-none"
           style={{
             display: "block",
+            filter: `hue-rotate(${balloon.color}deg) saturate(130%) brightness(105%)`,  // 彩度と明度を上げる
           }}
         />
       </div>

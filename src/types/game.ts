@@ -7,7 +7,7 @@ export interface Balloon {
   x: number; // 画面上のX座標（%）
   y: number; // 画面上のY座標（%）
   size: number; // 風船のサイズ（px）
-  color: string; // 風船の色
+  color: number; // 色相回転角度（degree）
   speed: number; // 上昇速度（px/s）
   popped: boolean; // 割れた状態かどうか
 }
