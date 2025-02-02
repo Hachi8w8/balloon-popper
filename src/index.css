@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply bg-gradient-to-b from-blue-200 to-blue-400;
+  }
+  
+  body {
+    @apply m-0 min-h-screen overflow-hidden font-sans antialiased;
+  }
+}
+
+@layer components {
+  .ground {
+    @apply fixed bottom-0 left-0 right-0;
+    height: 150px;  /* 地面の高さ */
+    background-color: #8B4513;  /* 茶色 */
+  }
+
+  .balloon {
+    @apply absolute rounded-full cursor-pointer;
+    will-change: transform;
+  }
+  
+  .game-container {
+    @apply relative w-full h-screen overflow-hidden;
+  }
+  
+  .header {
+    @apply fixed top-0 left-0 right-0 flex justify-between items-center p-4 bg-white/80 backdrop-blur-sm z-50;
+  }
+  
+  .score {
+    @apply text-2xl font-bold text-blue-600;
+  }
+  
+  .timer {
+    @apply text-2xl font-bold text-red-600;
+  }
+  
+  .start-button {
+    @apply fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
+           px-8 py-4 text-2xl font-bold text-white bg-blue-500 rounded-full 
+           hover:bg-blue-600 transform transition-transform hover:scale-105 
+           active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400 
+           focus:ring-opacity-50;
+  }
+
+  @keyframes rise {
+    from {
+      transform: translateY(0) scale(1);
+    }
+    to {
+      transform: translateY(-100vh) scale(1);
+    }
+  }
+
+  @keyframes pop {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+    100% {
+      transform: scale(0);
+    }
+  }
+
+  @keyframes floatUp {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(-100vh);  /* 画面の高さ分上に移動 */
+    }
+  }
+
+  .animate-rise {
+    animation: rise 8s linear;
+  }
+
+  .animate-pop {
+    animation: pop 0.3s ease-out forwards;
+  }
+}
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
