@@ -24,7 +24,7 @@ export const GameHeader: React.FC<GameHeaderProps> = memo(
             </div>
           </div>
           <div className="min-w-[120px] sm:min-w-[150px] text-center">
-            <div className="text-lg sm:text-xl font-medium text-blue-600">
+            <div className="text-lg sm:text-xl font-bold text-gray-900">
               残り時間: {Math.ceil(timeLeft)}秒
             </div>
           </div>
