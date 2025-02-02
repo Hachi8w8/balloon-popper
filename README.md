@@ -20,6 +20,11 @@
 
 ## 🛠️ 開発情報
 
+### 開発プロセス
+
+このゲームは[Cursor](https://cursor.sh/)のComposer機能を使用して開発されました。Composerは高度なAIペアプログラミング機能で、要件定義から実装までの開発プロセス全体をサポートしてくれます。
+詳細な要件定義から実装までのプロセスは[docs/requirements.md](docs/requirements.md)で確認できます。
+
 ### 技術スタック
 
 - フレームワーク：React + TypeScript
