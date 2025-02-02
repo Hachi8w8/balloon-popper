@@ -1,50 +1,58 @@
-# React + TypeScript + Vite
+# 🎈 風船割りゲーム
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+シンプルで楽しい風船割りゲーム！制限時間内にできるだけ多くの風船を割って、ハイスコアを目指しましょう。
 
-Currently, two official plugins are available:
+## 🎮 ゲームの遊び方
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1. 「スタート」ボタンをクリックしてゲームを開始
+2. 画面下から浮かび上がってくる風船をクリックして割る
+3. 制限時間は30秒
+4. 1個の風船を割ると10点獲得
+5. ゲーム終了後、ハイスコアを更新すると王冠マークと「新記録達成！」の演出が表示
 
-## Expanding the ESLint configuration
+### 難易度変化
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+ゲームは時間経過とともに3段階で難しくなります：
 
-- Configure the top-level `parserOptions` property like this:
+- 序盤（30-20秒）：1.5秒に1個の風船が出現
+- 中盤（20-10秒）：1秒に1個の風船が出現
+- 終盤（10-0秒）：0.5秒に1個の風船が出現
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## 🛠️ 開発情報
+
+### 技術スタック
+
+- フレームワーク：React + TypeScript
+- スタイリング：Tailwind CSS
+- ビルドツール：Vite
+- 状態管理：React Hooks
+
+### 主な機能
+
+- リアルタイムの風船アニメーション
+- スコアとハイスコアの管理（セッションストレージ使用）
+- レスポンシブ対応
+- アクセシビリティ対応
+
+### ローカルでの開発方法
+
+```bash
+# 依存関係のインストール
+npm install
+
+# 開発サーバーの起動
+npm run dev
+
+# ビルド
+npm run build
+
+# コードのフォーマット
+npm run format
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## 🎨 デザイン
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+- シンプルで直感的なUI
+- 風船は8色のカラフルなバリエーション
+- スムーズなアニメーション
+- 新記録達成時の特別な演出
