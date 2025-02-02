@@ -1,0 +1,266 @@
+name: Dependency Security Check
+
+on:
+  pull_request:
+    paths:
+      - '**/package.json'
+      - '**/requirements.txt'
+      - '**/composer.json'
+      - '**/go.mod'
+
+jobs:
+  security-check:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        run: git fetch origin ${{ github.base_ref }}
+
+      - name: Detect changes in dependency files
+        id: changes
+        run: |
+          detect_changes() {
+            local lang=$1
+            local file_pattern=$2
+            
+            if git diff origin/${{ github.base_ref }}..HEAD --name-only | grep "$file_pattern"; then
+              echo "${lang}_changes=true" >> $GITHUB_OUTPUT
+              echo "${lang}_paths<<EOF" >> $GITHUB_OUTPUT
+              git diff origin/${{ github.base_ref }}..HEAD --name-only | grep "$file_pattern" >> $GITHUB_OUTPUT
+              echo "EOF" >> $GITHUB_OUTPUT
+            fi
+          }
+
+          detect_changes "node" "package.json"
+          detect_changes "python" "requirements.txt"
+          detect_changes "php" "composer.json"
+          detect_changes "go" "go.mod"
+
+      - name: Setup tools
+        run: |
+          if [ "${{ steps.changes.outputs.node_changes }}" == "true" ]; then
+            echo "Setting up Node.js"
+            curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+          fi
+          
+          if [ "${{ steps.changes.outputs.python_changes }}" == "true" ]; then
+            echo "Setting up Python"
+            sudo apt-get install -y python3-pip
+            pip install safety
+          fi
+          
+          if [ "${{ steps.changes.outputs.php_changes }}" == "true" ]; then
+            echo "Setting up PHP"
+            sudo apt-get install -y php-cli unzip
+            curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
+          fi
+          
+          if [ "${{ steps.changes.outputs.go_changes }}" == "true" ]; then
+            echo "Setting up Go"
+            sudo apt-get install -y golang
+            go install golang.org/x/vuln/cmd/govulncheck@latest
+          fi
+
+      - name: Check dependencies
+        run: |
+          check_dependencies() {
+            local lang=$1
+            local file_pattern=$2
+            local install_cmd=$3
+            local audit_cmd=$4
+            local paths
+            
+            case "$lang" in
+              "node")
+                paths="${{ steps.changes.outputs.node_paths }}"
+                ;;
+              "python")
+                paths="${{ steps.changes.outputs.python_paths }}"
+                ;;
+              "php")
+                paths="${{ steps.changes.outputs.php_paths }}"
+                ;;
+              "go")
+                paths="${{ steps.changes.outputs.go_paths }}"
+                ;;
+            esac
+            
+            IFS=$'\n' read -d '' -r -a path_array <<< "$paths"
+            
+            for file_path in "${path_array[@]}"; do
+              echo "Checking $file_path"
+              dir=$(dirname "$file_path")
+              cd "$dir"
+              
+              # 変更前後の依存関係を比較
+              git show origin/${{ github.base_ref }}:$file_path > old_$file_pattern || true
+              
+              # 依存関係の変更を検出
+              local changed_deps
+              case "$lang" in
+                "node"|"php")
+                  local jq_field=".dependencies"
+                  [ "$lang" == "php" ] && jq_field=".require"
+                  
+                  changed_deps=$(jq -r "
+                    def compare_deps:
+                      . as \$current
+                      | input as \$old
+                      | (\$current | keys) as \$current_keys
+                      | (\$old | keys) as \$old_keys
+                      | (\$current_keys - \$old_keys) as \$added
+                      | (\$current_keys - \$added) as \$existing
+                      | {
+                          added: \$added,
+                          updated: (\$existing | map(select(\$current[.] != \$old[.])))
+                      };
+                    $jq_field as \$deps
+                    | if \$deps then
+                        {\"$jq_field\": \$deps} | compare_deps
+                      else
+                        empty
+                      end
+                    " $file_pattern old_$file_pattern)
+                  ;;
+                "python"|"go")
+                  local grep_cmd="cat"
+                  [ "$lang" == "go" ] && grep_cmd="grep '^require'"
+                  
+                  changed_deps=$(comm -13 <($grep_cmd old_$file_pattern | sort) <($grep_cmd $file_pattern | sort) || true)
+                  ;;
+              esac
+              
+              if [ ! -z "$changed_deps" ]; then
+                eval "$install_cmd"
+                result=$(eval "$audit_cmd")
+                echo "${lang}_audit_${file_path//\//_}<<EOF" >> $GITHUB_ENV
+                echo "$result" >> $GITHUB_ENV
+                echo "EOF" >> $GITHUB_ENV
+              fi
+              cd - > /dev/null
+            done
+          }
+
+          if [ "${{ steps.changes.outputs.node_changes }}" == "true" ]; then
+            check_dependencies "node" "package.json" "npm install --package-lock=false" "npm audit --json"
+          fi
+
+          if [ "${{ steps.changes.outputs.python_changes }}" == "true" ]; then
+            check_dependencies "python" "requirements.txt" "pip install -r requirements.txt" "safety check --json"
+          fi
+
+          if [ "${{ steps.changes.outputs.php_changes }}" == "true" ]; then
+            check_dependencies "php" "composer.json" "composer install --no-lock" "composer audit --format=json"
+          fi
+
+          if [ "${{ steps.changes.outputs.go_changes }}" == "true" ]; then
+            check_dependencies "go" "go.mod" "GOWORK=off go mod download" "govulncheck -json ./..."
+          fi
+
+      - name: Create PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let vulnerabilities = [];
+            
+            const processResults = (lang, paths, processor) => {
+              if (process.env[`${lang}_changes`] === 'true') {
+                const filePaths = paths?.split('\n') || [];
+                for (const path of filePaths) {
+                  const result = process.env[`${lang}_audit_${path.replace(/\//g, '_')}`];
+                  if (result) {
+                    const vulns = processor(JSON.parse(result));
+                    vulnerabilities.push(...vulns.map(v => ({ ...v, path })));
+                  }
+                }
+              }
+            };
+
+            // Node.jsの脆弱性結果を収集
+            processResults('node', process.env.node_paths, data => 
+              Object.values(data.vulnerabilities || {}).map(v => ({
+                package: v.name,
+                severity: v.severity,
+                description: v.via?.[0]?.title,
+                url: v.via?.[0]?.url,
+                fix: v.fixAvailable?.version
+              }))
+            );
+            
+            // Pythonの脆弱性結果を収集
+            processResults('python', process.env.python_paths, data =>
+              data.map(v => ({
+                package: v.package_name,
+                severity: v.severity,
+                description: v.advisory,
+                version: v.analyzed_version
+              }))
+            );
+            
+            // PHPの脆弱性結果を収集
+            processResults('php', process.env.php_paths, data =>
+              Object.values(data.advisories || {}).map(v => ({
+                package: v.package,
+                severity: v.severity,
+                description: v.title,
+                url: v.link
+              }))
+            );
+            
+            // Goの脆弱性結果を収集
+            processResults('go', process.env.go_paths, data =>
+              data.map(v => ({
+                package: v.module,
+                severity: v.severity || 'unknown',
+                description: v.details,
+                url: v.reference
+              }))
+            );
+
+            if (vulnerabilities.length > 0) {
+              // 脆弱性をパスごとにグループ化
+              const groupedVulns = vulnerabilities.reduce((acc, v) => {
+                if (!acc[v.path]) acc[v.path] = [];
+                acc[v.path].push(v);
+                return acc;
+              }, {});
+
+              const comment = [
+                '## ⚠️ セキュリティ脆弱性の検出\n'
+              ];
+
+              // パスごとに脆弱性情報を表示
+              for (const [path, vulns] of Object.entries(groupedVulns)) {
+                comment.push(`### 📁 ${path}\n`);
+                vulns.forEach(v => {
+                  comment.push(
+                    `#### 📦 ${v.package}`,
+                    `- 深刻度: ${v.severity}`,
+                    v.description && `- 脆弱性: ${v.description}`,
+                    v.url && `- 詳細: ${v.url}`,
+                    v.fix && `- 修正バージョン: ${v.fix}`,
+                    ''
+                  );
+                });
+              }
+
+              comment.push(
+                '---',
+                '⚡ 上記の脆弱性が検出されました。詳細リンクを確認し、必要な対応を行ってください。'
+              );
+
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment.flat().filter(Boolean).join('\n')
+              });
+            }
