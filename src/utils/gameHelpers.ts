@@ -7,7 +7,7 @@ export const generateId = (): string => {
 };
 
 // ランダムな色を選択する関数
-export const getRandomColor = (): string => {
+export const getRandomColor = (): number => {
   return BALLOON_COLORS[Math.floor(Math.random() * BALLOON_COLORS.length)];
 };
 
