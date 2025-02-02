@@ -8,7 +8,7 @@ function App() {
   const { gameState, startGame, handlePopBalloon } = useGame();
 
   return (
-    <div className="game-container relative w-full h-screen bg-gray-100 overflow-hidden">
+    <div className="game-container bg-gradient-to-b from-blue-50 to-blue-100 text-gray-900">
       <GameHeader
         score={gameState.score}
         timeLeft={gameState.timeLeft}

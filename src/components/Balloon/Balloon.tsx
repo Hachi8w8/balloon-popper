@@ -28,14 +28,10 @@ export const Balloon: React.FC<BalloonProps> = memo(
 
     return (
       <div
-        className="balloon"
+        className="balloon fixed cursor-pointer w-[10vmin] h-[10vmin] min-w-[60px] min-h-[60px] max-w-[100px] max-h-[100px]"
         style={{
-          position: "fixed",
           bottom: position.bottom,
           left: position.left,
-          width: "100px",
-          height: "100px",
-          cursor: "pointer",
           animation: isGameOver ? "none" : "floatUp 8s linear infinite",
         }}
         onClick={handleClick}
@@ -46,9 +42,8 @@ export const Balloon: React.FC<BalloonProps> = memo(
         <img
           src={balloonSvg}
           alt=""
-          className="w-full h-full"
+          className="w-full h-full pointer-events-none"
           style={{
-            pointerEvents: "none",
             display: "block",
           }}
         />
