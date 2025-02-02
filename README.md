@@ -1,3 +1,8 @@
+# このリポジトリについて
+このゲームは[Cursor](https://cursor.sh/)のComposer機能を使用して開発されました。
+要件定義書[docs/requirements.md](docs/requirements.md)をもとに自動でコード生成をさせたシステムです。
+
+
 # 🎈 風船割りゲーム
 
 シンプルで楽しい風船割りゲーム！制限時間内にできるだけ多くの風船を割って、ハイスコアを目指しましょう。
@@ -19,12 +24,6 @@
 - 終盤（10-0秒）：0.5秒に1個の風船が出現
 
 ## 🛠️ 開発情報
-
-### 開発プロセス
-
-このゲームは[Cursor](https://cursor.sh/)のComposer機能を使用して開発されました。Composerは高度なAIペアプログラミング機能で、要件定義から実装までの開発プロセス全体をサポートしてくれます。
-詳細な要件定義から実装までのプロセスは[docs/requirements.md](docs/requirements.md)で確認できます。
-
 ### 技術スタック
 
 - フレームワーク：React + TypeScript
