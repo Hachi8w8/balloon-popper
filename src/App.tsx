@@ -34,6 +34,7 @@ function App() {
         highScore={gameState.highScore}
         onRetry={startGame}
         isGameOver={gameState.status === "gameover"}
+        isNewHighScore={gameState.isNewHighScore}
       />
 
       <div className="ground" />

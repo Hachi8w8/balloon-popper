@@ -5,6 +5,7 @@ import { getHighScore, saveHighScore } from "../utils/gameHelpers";
 import { useBalloons } from "./useBalloons";
 
 export const useGame = () => {
+  // 初期化時のみハイスコアを取得
   const [gameState, setGameState] = useState<GameState>({
     status: "idle",
     score: 0,
@@ -19,6 +20,23 @@ export const useGame = () => {
   const lastTimeRef = useRef<number>(0);
   const balloonIntervalRef = useRef<number>(0);
   const animationFrameRef = useRef<number>();
+  const isNewHighScore = useRef<boolean>(false);
+
+  // ゲーム開始
+  const startGame = useCallback(() => {
+    setGameState((prev) => ({
+      ...prev,
+      status: "playing",
+      score: 0,
+      timeLeft: DEFAULT_GAME_CONFIG.gameDuration,
+      // スタート時にハイスコアを再取得
+      highScore: getHighScore(),
+    }));
+    isNewHighScore.current = false;
+    resetBalloons();
+    lastTimeRef.current = 0;
+    balloonIntervalRef.current = 0;
+  }, [resetBalloons]);
 
   // ゲームの状態を更新
   const updateGame = useCallback(
@@ -77,19 +95,6 @@ export const useGame = () => {
     [gameState.status, gameState.timeLeft, addBalloon, updateBalloons],
   );
 
-  // ゲーム開始
-  const startGame = useCallback(() => {
-    setGameState((prev) => ({
-      ...prev,
-      status: "playing",
-      score: 0,
-      timeLeft: DEFAULT_GAME_CONFIG.gameDuration,
-    }));
-    resetBalloons();
-    lastTimeRef.current = 0;
-    balloonIntervalRef.current = 0;
-  }, [resetBalloons]);
-
   // ゲームループの開始
   useEffect(() => {
     if (gameState.status === "playing") {
@@ -120,15 +125,20 @@ export const useGame = () => {
   useEffect(() => {
     if (gameState.status === "playing" && gameState.timeLeft <= 0) {
       const finalScore = gameState.score;
-      saveHighScore(finalScore);
+      const currentHighScore = getHighScore();
+      
+      // 新記録かどうかを判定
+      if (finalScore > currentHighScore) {
+        saveHighScore(finalScore);
+        isNewHighScore.current = true;
+      }
 
       setGameState((prev) => ({
         ...prev,
         status: "gameover",
-        highScore: Math.max(prev.highScore, finalScore),
+        // ハイスコアは更新しない（現在の値を維持）
       }));
 
-      // ゲームオーバー時にアニメーションフレームをキャンセルと風船をリセット
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
@@ -140,6 +150,7 @@ export const useGame = () => {
     gameState: {
       ...gameState,
       balloons,
+      isNewHighScore: isNewHighScore.current,
     },
     startGame,
     handlePopBalloon,

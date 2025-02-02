@@ -6,13 +6,12 @@ interface GameOverScreenProps {
   highScore: number;
   onRetry: () => void;
   isGameOver: boolean;
+  isNewHighScore: boolean;
 }
 
 export const GameOverScreen: React.FC<GameOverScreenProps> = memo(
-  ({ score, highScore, onRetry, isGameOver }) => {
+  ({ score, highScore, onRetry, isGameOver, isNewHighScore }) => {
     if (!isGameOver) return null;
-
-    const isNewHighScore = score >= highScore;
 
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
